@@ -1,15 +1,25 @@
 import os
 import math
 import time
-
+import shutil
 # Constants needed for functions
 byte_Conversion_MB = 1e6     # 1e6 Bytes = MB
 byte_Conversion_GB = 1e9     # 1e9 Bytes = GB
 byte_Conversion_KB = 1e3     # 1e3 Bytes = KB
 moveSwap = False
 clusterSize = 4096     #Windows cluster size is 4096 bytes 
-path = r"C:\\"
-
+pathExhists = True
+#Allows user to configure the path used 
+print("Please enter the path of a folder that the program can opperate in (program won't access folders that come before the path entered): ")
+print("Enter a 0 to Use default path which is C:\\.")
+print("Otherwise enter path.")
+path = input()
+if (path == "0"):
+    path = "C:\\"
+if (not (os.path.exists(path))):
+    print("Error path doesn't exhist exiting program.")
+    pathExhists
+    
 
 
 
@@ -260,48 +270,58 @@ def find_Folder_Keyword() :
     print("Enter a keyword to find a file or folder that contains the keyword in it's name: ")
     keyword = input()
     fileFound = False
-    print()
+    error = False
+    print("Do you want to delete any of these files: \n1: Don't delete any files.\n2: Delete only specific files (will be asked after each file is found).\n3: Delete all files found.")
+    delete = input()
+    
     for root, dirs, files in os.walk(path) :
         try:
             for d in dirs :
                 if (keyword in d):
-                    print("Folder found: " + os.path.join(root, d))
-                    print()
-
+                    print("Folder found: " + os.path.join(root, d) + "\n")
+                    if (delete == "3" ):
+                        shutil.rmtree(os.path.join(root, d))
+                    elif (delete == "2"):
+                        print("Do you want to delete this folder Y/N: ")
+                        deleteComp = input()
+                        if (deleteComp == "Y"):
+                            shutil.rmtree(os.path.join(root, d))
                     fileFound = True
             for j in files :
                 if (keyword in j):
-                    print("File found: " + os.path.join(root, j))
-                    print()
+                    print("File found: " + os.path.join(root, j) + "\n")
+                    if (delete == "3" ):
+                        os.rmdir(os.path.join(root, j))
+                    elif (delete == "2"):
+                        print("Do you want to delete this file Y/N: ")
+                        deleteComp = input()
+                        if (deleteComp == "Y"):
+                            os.remove(os.path.join(root, j))
                     fileFound = True
 
-            if (not fileFound):
-                print("Was unable to find any folder with keyword " + keyword + ".")
+        
         except FileNotFoundError:
-            print()
+            error = True
         except OSError:
-            print()
+            error = True
+    if (not fileFound):
+                print("Was unable to find any folder with keyword " + keyword + ".")
                 
 
 
 
-# Main program that finds out what user wants to do 
-    
-#Allows user to configure the path used 
-print("Please enter the path of a folder that the program can opperate in (program won't access folders that come before the path entered): ")
-print("0: Use default path which is C:\\.")
-print("Otherwise enter path.")
-path = input()
-if (path == "0"):
-    path = "C:\\"
+
 
 print()
 
 def main():
 
     #Allows user to configure the path used 
+    # Main program that finds out what user wants to do 
     
-
+    if (not pathExhists):
+        return
+    
     while (True):
         # User picks what function they want to call
         print("What would you like to do (type in number that corresponds with the options below): ")
