@@ -2,6 +2,7 @@ import os
 import math
 import time
 import shutil
+import sys
 # Constants needed for functions
 byte_Conversion_MB = 1e6     # 1e6 Bytes = MB
 byte_Conversion_GB = 1e9     # 1e9 Bytes = GB
@@ -17,8 +18,9 @@ path = input()
 if (path == "0"):
     path = "C:\\"
 if (not (os.path.exists(path))):
-    print("Error path doesn't exhist exiting program.")
-    pathExhists
+    print("Error: path doesn't exhist exiting program.")
+    time.sleep(1)
+    sys.exit(1)
     
 
 
