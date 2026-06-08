@@ -279,7 +279,7 @@ def find_Folder_Keyword() :
     for root, dirs, files in os.walk(path) :
         try:
             for d in dirs :
-                if (keyword in d):
+                if (keyword.casefold() in d.casefold()):
                     print("Folder found: " + os.path.join(root, d) + "\n")
                     if (delete == "3" ):
                         shutil.rmtree(os.path.join(root, d))
@@ -290,7 +290,7 @@ def find_Folder_Keyword() :
                             shutil.rmtree(os.path.join(root, d))
                     fileFound = True
             for j in files :
-                if (keyword in j):
+                if (keyword.casefold() in j.casefold()):
                     print("File found: " + os.path.join(root, j) + "\n")
                     if (delete == "3" ):
                         os.rmdir(os.path.join(root, j))
@@ -310,11 +310,6 @@ def find_Folder_Keyword() :
                 print("Was unable to find any folder with keyword " + keyword + ".")
                 
 
-
-
-
-
-print()
 
 def main():
 
