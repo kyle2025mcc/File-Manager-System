@@ -20,7 +20,7 @@ root_dict = {
 # operating_system will be 1 if windows and 0 if linux
 class operating_system_class:
     def __init__ (self):
-        self.operating_system = root_dict[os.name]
+        self.path = root_dict[os.name]
 
     def set_path (self, newPath):
         self.path = newPath
@@ -83,8 +83,7 @@ def find_File_Size(operating_system):
 def find_Folder(operating_system):
     folderWithName = []
     folderPathStorage = []
-    folderPath = ""
-    finalFolder = ()
+    
     while True: 
         # Finds folders with the name and stores them in array folderWithName
         folderName = input("Please enter the folder's name: ")
@@ -292,7 +291,7 @@ def find_Folder_Keyword(operating_system) :
 
 
 
-# Dictionary utilized for 
+# Dictionary utilized for calling the correct function
 main_dict = {
     1 : find_File_Size,
     2 : moveorswap_Contents,
@@ -317,7 +316,7 @@ def main():
         time.sleep(1)
         sys.exit(1)
     
-
+    
     while (True):
         # User picks what function they want to call
         print("\nWhat would you like to do (type in number that corresponds with the options below): ")
