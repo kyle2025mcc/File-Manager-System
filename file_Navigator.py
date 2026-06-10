@@ -6,7 +6,7 @@ import time
 
 # Constants needed for functions
 clustor_size = 4096
-
+size_found = False # Needed for the find file size function
 
 
 # Dictionary for correct default root
@@ -35,9 +35,33 @@ measure_dict = {
     "bytes" : (1, "Bytes")
 }
 
+
+def find_size_recur(path, size, measurement):
+    global size_found
+    with os.scandir(path) as list:
+        for f in list:
+            try:
+                if (f.is_file()):
+                    disk_size = math.ceil(f.stat().st_size/clustor_size)*clustor_size
+                    if (f.stat().st_size == 0):
+                        disk_size = 0
+                    if disk_size >= size:
+                        byte_conversion, unit = measure_dict[measurement.casefold()]
+                        print(f.name + " at location " + f.path + " : " + str(disk_size / byte_conversion) + " " + unit + "\n")
+                        size_found = True
+                elif (f.is_dir()):
+                    find_size_recur(f.path, size, measurement)
+            except:
+                pass
+                
+
+
+
+
 # Prints all files above a certain file size given by the user 
 def find_File_Size(operating_system):
-    file_found = False
+    global size_found
+    size_found = False # Setting variable to false just in case function has already been ran
     # Takes user input on what measurement they want file sizes to be returned in 
     while True : 
         measurement = input("Enter unit of size (GB, MB, KB, Bytes): ")
@@ -54,27 +78,13 @@ def find_File_Size(operating_system):
     
     byteSize = int(size) * int(byte_conversion)      #Calculates user input into bytes to compare
 
+    
     #Looks through all files and prints those that have greater file size
-    for root, dirs, files in os.walk(operating_system.path):
-        for i in files:
-            try:
-                current_file = os.path.join(root, i)
-                file_size = os.path.getsize(current_file)
-                disk_size = math.ceil(file_size/clustor_size)*clustor_size    #Estimates Disk size (isn't entirely accurate) 
-                if (file_size == 0):
-                    disk_size = 0 
+    find_size_recur(operating_system.path, byteSize, measurement)
 
-                if disk_size >= byteSize:
-                    print(i + " at location " + current_file + " : " + str(disk_size / byte_conversion) + " " + unit)
-                    file_found = True
-                    print()
-            # Can't access size of file, so just ignore it 
-            except:
-                pass 
-                
-            
-    if (not file_found):
-                print("No file found above the size of " + str(size) + measurement)
+    if not size_found:
+        print("No file found above the size of " + str(size) + measurement)
+        return
 
 # Called by the find_Folder function to recursively go through every folder
 # Method is used because it is faster and otherwise linux is too slow
@@ -300,12 +310,26 @@ def find_Folder_Keyword(operating_system) :
                 
 
 
+def change_path(operating_system):
+    print("\nEnter a new file path:")
+    while (True):
+        new_path = input()
+        if (os.path.exists(new_path)):
+            operating_system.set_path(new_path)
+            print("Successfully changed the file path.")
+            time.sleep(0.5)
+            break
+        else:
+            print("Invalid file path. Please enter one that exhists:")
+
+
 
 # Dictionary utilized for calling the correct function
 main_dict = {
     1 : find_File_Size,
     2 : moveorswap_Contents,
-    3 : find_Folder_Keyword
+    3 : find_Folder_Keyword,
+    -1 : change_path
 }
 
 
@@ -330,7 +354,7 @@ def main():
     while (True):
         # User picks what function they want to call
         print("\nWhat would you like to do (type in number that corresponds with the options below): ")
-        selection = input("1: Find files above a certain size.\n2: Move/Swap the contents of two folders.\n3: Find a file or folder based on a keyword entered.\n0: Exit the program\n")
+        selection = input("1: Find files above a certain size.\n2: Move/Swap the contents of two folders.\n3: Find a file or folder based on a keyword entered.\n-1: Change the path the program can operate in.\n0: Exit the program\n")
         selection = int(selection)
         if (selection == 0):
             print("Exiting program.")
@@ -342,6 +366,7 @@ def main():
         # Invalid input user needs to try again.
         except KeyError:
             print("Invalid input. Please enter a valid number.\n")
+            time.sleep(1)
 
                 
 
