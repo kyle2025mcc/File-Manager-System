@@ -65,7 +65,7 @@ def find_File_Size(operating_system):
                     disk_size = 0 
 
                 if disk_size >= byteSize:
-                    print(i + " at location " + current_file + " : " + str(math.ceil(disk_size / byte_conversion)) + unit)
+                    print(i + " at location " + current_file + " : " + str(disk_size / byte_conversion) + " " + unit)
                     file_found = True
                     print()
             # Can't access size of file, so just ignore it 
@@ -75,6 +75,21 @@ def find_File_Size(operating_system):
             
     if (not file_found):
                 print("No file found above the size of " + str(size) + measurement)
+
+# Called by the find_Folder function to recursively go through every folder
+# Method is used because it is faster and otherwise linux is too slow
+def find_folder_recur(path, folder_with_name, folder_path_storage, folder_name):
+    try: 
+        with os.scandir(path) as d:
+                    for f in d:
+                        if f.is_dir():
+                            if f.name == folder_name:
+                                folder_with_name.append(f.name)
+                                folder_path_storage.append(f.path)
+                            find_folder_recur(f.path, folder_with_name, folder_path_storage, folder_name)
+    except:
+        pass
+
 
 # Used as a part of other functions
 # Finds a folder location based on what the user inputs
@@ -88,12 +103,7 @@ def find_Folder(operating_system):
         # Finds folders with the name and stores them in array folderWithName
         folderName = input("Please enter the folder's name: ")
         print()
-        for root, dirs, files in os.walk(operating_system.path):
-            for i in dirs :
-                if i == folderName :
-                    folderWithName.append(i)
-                    folderPathStorage.append(os.path.join(root, i))
-
+        find_folder_recur(operating_system.path, folderWithName, folderPathStorage, folderName)
         # Returns correct folder with name and path
         if (len(folderWithName) == 1):
             return (folderWithName[0], folderPathStorage[0])
@@ -328,8 +338,9 @@ def main():
         # Utilizing main_dict to call the correct function
         try:
             main_dict[selection](operating_system)
+            time.sleep(1)
         # Invalid input user needs to try again.
-        except:
+        except KeyError:
             print("Invalid input. Please enter a valid number.\n")
 
                 
