@@ -7,7 +7,7 @@ import time
 # Constants needed for functions
 clustor_size = 4096
 size_found = False # Needed for the find file size function
-
+folder_found = False # Needed for the find keyword function
 
 # Dictionary for correct default root
 root_dict = {
@@ -258,54 +258,58 @@ def moveFolderContents(Path1, Path2) :
                 print("Can't be moved by the system: " + currentFile + "\n")
                
     
+# Enter true if it is a folder and false otherwise
+keyword_dict = {
+    True : ("Folder found: ", shutil.rmtree, "Do you want to delete this folder and everything in it Y/N: "),
+    False : ("File found: ", os.remove, "Do you want to delete this file Y/N: ")
+}
 
 
 
-    
+# helper function for find_Folder_Keyword
+def keyword_recur(path, delete, keyword):
+    global folder_found
+    delete_choice = ""
+    with os.scandir(path) as list:
+        for f in list:
+            try:
+                if keyword.casefold() in f.name.casefold():
+                    folder_found = True
+                    message1, command, message2 = keyword_dict[f.is_dir()]
+                    print("\n" + message1 + f.path)
+                    try:
+                        if (delete == "2"):
+                            delete_choice = input(message2)
+                        if (delete_choice == "Y" or delete == "3"):
+                            command(f.path)
+                            delete_choice = ""
+                        
+                    except:
+                        print("Unable to delete " + f.name + "\n")
+                    
+
+                if (f.is_dir()):
+                    keyword_recur(f.path, delete, keyword)
+
+            except:
+                pass
     
 
             
 
 # Find a file or folder based on keyword
 def find_Folder_Keyword(operating_system) :
+    global folder_found 
+    folder_found = False
+
     print("Enter a keyword to find a file or folder that contains the keyword in it's name: ")
     keyword = input()
-    fileFound = False
     print("Do you want to delete any of these files: \n1: Don't delete any files.\n2: Delete only specific files (will be asked after each file is found).\n3: Delete all files found.")
     delete = input()
-    print()
     
-    for root, dirs, files in os.walk(operating_system.path) :
-        try:
-            # Look through all folders/directories
-            for d in dirs :
-                if (keyword.casefold() in d.casefold()):
-                    print("Folder found: " + os.path.join(root, d) + "\n")
-                    if (delete == "3" ):
-                        shutil.rmtree(os.path.join(root, d))
-                    elif (delete == "2"):
-                        print("Do you want to delete this folder Y/N: ")
-                        deleteComp = input()
-                        if (deleteComp == "Y"):
-                            shutil.rmtree(os.path.join(root, d))
-                    fileFound = True
-            # Look through all files
-            for j in files :
-                if (keyword.casefold() in j.casefold()):
-                    print("File found: " + os.path.join(root, j) + "\n")
-                    if (delete == "3" ):
-                        os.rmdir(os.path.join(root, j))
-                    elif (delete == "2"):
-                        print("Do you want to delete this file Y/N: ")
-                        deleteComp = input()
-                        if (deleteComp == "Y"):
-                            os.remove(os.path.join(root, j))
-                    fileFound = True
+    keyword_recur(operating_system.path, delete, keyword)
 
-        
-        except:
-            pass
-    if (not fileFound):
+    if (not folder_found):
                 print("Was unable to find any folder/file with keyword " + keyword + ".")
                 
 
