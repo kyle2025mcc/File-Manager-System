@@ -6,8 +6,8 @@ import time
 
 # Constants needed for functions
 clustor_size = 4096
-
-
+size_found = False # Needed for the find file size function
+folder_found = False # Needed for the find keyword function
 
 # Dictionary for correct default root
 root_dict = {
@@ -35,9 +35,33 @@ measure_dict = {
     "bytes" : (1, "Bytes")
 }
 
+
+def find_size_recur(path, size, measurement):
+    global size_found
+    with os.scandir(path) as list:
+        for f in list:
+            try:
+                if (f.is_file()):
+                    disk_size = math.ceil(f.stat().st_size/clustor_size)*clustor_size
+                    if (f.stat().st_size == 0):
+                        disk_size = 0
+                    if disk_size >= size:
+                        byte_conversion, unit = measure_dict[measurement.casefold()]
+                        print(f.name + " at location " + f.path + " : " + str(disk_size / byte_conversion) + " " + unit + "\n")
+                        size_found = True
+                elif (f.is_dir()):
+                    find_size_recur(f.path, size, measurement)
+            except:
+                pass
+                
+
+
+
+
 # Prints all files above a certain file size given by the user 
 def find_File_Size(operating_system):
-    file_found = False
+    global size_found
+    size_found = False # Setting variable to false just in case function has already been ran
     # Takes user input on what measurement they want file sizes to be returned in 
     while True : 
         measurement = input("Enter unit of size (GB, MB, KB, Bytes): ")
@@ -54,27 +78,13 @@ def find_File_Size(operating_system):
     
     byteSize = int(size) * int(byte_conversion)      #Calculates user input into bytes to compare
 
+    
     #Looks through all files and prints those that have greater file size
-    for root, dirs, files in os.walk(operating_system.path):
-        for i in files:
-            try:
-                current_file = os.path.join(root, i)
-                file_size = os.path.getsize(current_file)
-                disk_size = math.ceil(file_size/clustor_size)*clustor_size    #Estimates Disk size (isn't entirely accurate) 
-                if (file_size == 0):
-                    disk_size = 0 
+    find_size_recur(operating_system.path, byteSize, measurement)
 
-                if disk_size >= byteSize:
-                    print(i + " at location " + current_file + " : " + str(disk_size / byte_conversion) + " " + unit)
-                    file_found = True
-                    print()
-            # Can't access size of file, so just ignore it 
-            except:
-                pass 
-                
-            
-    if (not file_found):
-                print("No file found above the size of " + str(size) + measurement)
+    if not size_found:
+        print("No file found above the size of " + str(size) + measurement)
+        return
 
 # Called by the find_Folder function to recursively go through every folder
 # Method is used because it is faster and otherwise linux is too slow
@@ -248,56 +258,73 @@ def moveFolderContents(Path1, Path2) :
                 print("Can't be moved by the system: " + currentFile + "\n")
                
     
+# Enter true if it is a folder and false otherwise
+keyword_dict = {
+    True : ("Folder found: ", shutil.rmtree, "Do you want to delete this folder and everything in it Y/N: "),
+    False : ("File found: ", os.remove, "Do you want to delete this file Y/N: ")
+}
 
 
 
-    
+# helper function for find_Folder_Keyword
+def keyword_recur(path, delete, keyword):
+    global folder_found
+    delete_choice = ""
+    with os.scandir(path) as list:
+        for f in list:
+            try:
+                if keyword.casefold() in f.name.casefold():
+                    folder_found = True
+                    message1, command, message2 = keyword_dict[f.is_dir()]
+                    print("\n" + message1 + f.path)
+                    try:
+                        if (delete == "2"):
+                            delete_choice = input(message2)
+                        if (delete_choice == "Y" or delete == "3"):
+                            command(f.path)
+                            delete_choice = ""
+                        
+                    except:
+                        print("Unable to delete " + f.name + "\n")
+                    
+
+                if (f.is_dir()):
+                    keyword_recur(f.path, delete, keyword)
+
+            except:
+                pass
     
 
             
 
 # Find a file or folder based on keyword
 def find_Folder_Keyword(operating_system) :
+    global folder_found 
+    folder_found = False
+
     print("Enter a keyword to find a file or folder that contains the keyword in it's name: ")
     keyword = input()
-    fileFound = False
     print("Do you want to delete any of these files: \n1: Don't delete any files.\n2: Delete only specific files (will be asked after each file is found).\n3: Delete all files found.")
     delete = input()
-    print()
     
-    for root, dirs, files in os.walk(operating_system.path) :
-        try:
-            # Look through all folders/directories
-            for d in dirs :
-                if (keyword.casefold() in d.casefold()):
-                    print("Folder found: " + os.path.join(root, d) + "\n")
-                    if (delete == "3" ):
-                        shutil.rmtree(os.path.join(root, d))
-                    elif (delete == "2"):
-                        print("Do you want to delete this folder Y/N: ")
-                        deleteComp = input()
-                        if (deleteComp == "Y"):
-                            shutil.rmtree(os.path.join(root, d))
-                    fileFound = True
-            # Look through all files
-            for j in files :
-                if (keyword.casefold() in j.casefold()):
-                    print("File found: " + os.path.join(root, j) + "\n")
-                    if (delete == "3" ):
-                        os.rmdir(os.path.join(root, j))
-                    elif (delete == "2"):
-                        print("Do you want to delete this file Y/N: ")
-                        deleteComp = input()
-                        if (deleteComp == "Y"):
-                            os.remove(os.path.join(root, j))
-                    fileFound = True
+    keyword_recur(operating_system.path, delete, keyword)
 
-        
-        except:
-            pass
-    if (not fileFound):
+    if (not folder_found):
                 print("Was unable to find any folder/file with keyword " + keyword + ".")
                 
+
+
+def change_path(operating_system):
+    print("\nEnter a new file path:")
+    while (True):
+        new_path = input()
+        if (os.path.exists(new_path)):
+            operating_system.set_path(new_path)
+            print("Successfully changed the file path.")
+            time.sleep(0.5)
+            break
+        else:
+            print("Invalid file path. Please enter one that exhists:")
 
 
 
@@ -305,7 +332,8 @@ def find_Folder_Keyword(operating_system) :
 main_dict = {
     1 : find_File_Size,
     2 : moveorswap_Contents,
-    3 : find_Folder_Keyword
+    3 : find_Folder_Keyword,
+    -1 : change_path
 }
 
 
@@ -330,7 +358,7 @@ def main():
     while (True):
         # User picks what function they want to call
         print("\nWhat would you like to do (type in number that corresponds with the options below): ")
-        selection = input("1: Find files above a certain size.\n2: Move/Swap the contents of two folders.\n3: Find a file or folder based on a keyword entered.\n0: Exit the program\n")
+        selection = input("1: Find files above a certain size.\n2: Move/Swap the contents of two folders.\n3: Find a file or folder based on a keyword entered.\n-1: Change the path the program can operate in.\n0: Exit the program\n")
         selection = int(selection)
         if (selection == 0):
             print("Exiting program.")
@@ -342,6 +370,7 @@ def main():
         # Invalid input user needs to try again.
         except KeyError:
             print("Invalid input. Please enter a valid number.\n")
+            time.sleep(1)
 
                 
 
